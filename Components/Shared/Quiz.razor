@@ -1,0 +1,52 @@
+<div class="quiz">
+    @for (var q = 0; q < Questions.Count; q++)
+    {
+        var index = q;
+        var question = Questions[index];
+        var chosen = _answers.GetValueOrDefault(index, -1);
+        <div class="quiz-q">
+            <p class="quiz-title"><span class="quiz-num">@(index + 1)</span> @question.Question</p>
+            @if (question.Code is { } code)
+            {
+                <div class="code code-inline">
+                    <table><tbody>
+                        @foreach (var line in SourceCode.HighlightLines(code))
+                        {
+                            <tr><td class="src">@((MarkupString)line)</td></tr>
+                        }
+                    </tbody></table>
+                </div>
+            }
+            <div class="quiz-options">
+                @for (var o = 0; o < question.Options.Length; o++)
+                {
+                    var option = o;
+                    var state = chosen < 0 ? "" : option == question.CorrectIndex ? "correct" : option == chosen ? "wrong" : "dim";
+                    <button class="quiz-option @state" disabled="@(chosen >= 0)" @onclick="() => _answers[index] = option">
+                        <span class="quiz-letter">@((char)('A' + option))</span> @question.Options[option]
+                    </button>
+                }
+            </div>
+            @if (chosen >= 0)
+            {
+                <div class="quiz-explain @(chosen == question.CorrectIndex ? "ok" : "fail")">
+                    <strong>@(chosen == question.CorrectIndex ? "Correct." : "Not quite.")</strong> @question.Explanation
+                </div>
+            }
+        </div>
+    }
+    @if (_answers.Count == Questions.Count && Questions.Count > 0)
+    {
+        var score = _answers.Count(a => Questions[a.Key].CorrectIndex == a.Value);
+        <div class="quiz-score">
+            Score: @score / @Questions.Count
+            <button class="btn btn-ghost" @onclick="() => _answers.Clear()">Try again</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<QuizQuestion> Questions { get; set; } = [];
+
+    private readonly Dictionary<int, int> _answers = [];
+}

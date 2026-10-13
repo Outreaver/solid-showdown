@@ -1,0 +1,35 @@
+@* Renders what a demo wrote to its DemoLog: a console plus any tables. *@
+
+<div class="console" aria-live="polite">
+    @foreach (var line in Log.Lines)
+    {
+        <div class="cl cl-@line.Kind.ToString().ToLowerInvariant()">@line.Text</div>
+    }
+</div>
+
+@foreach (var table in Log.Tables)
+{
+    <div class="demo-table-wrap">
+        <table class="demo-table">
+            <caption>@table.Caption</caption>
+            <thead>
+                <tr>@foreach (var h in table.Headers) { <th>@h</th> }</tr>
+            </thead>
+            <tbody>
+                @foreach (var row in table.Rows)
+                {
+                    <tr>
+                        @foreach (var cell in row)
+                        {
+                            <td class="cell-@cell.Kind.ToString().ToLowerInvariant()">@cell.Text</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public DemoLog Log { get; set; } = default!;
+}

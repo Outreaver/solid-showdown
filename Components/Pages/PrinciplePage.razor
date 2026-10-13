@@ -1,0 +1,101 @@
+@page "/principle/{Slug}"
+
+@if (_principle is null)
+{
+    <PageTitle>Not found · SOLID Showdown</PageTitle>
+    <h1>Unknown principle</h1>
+    <p><a href="">Back to the overview</a></p>
+}
+else
+{
+    var p = _principle;
+    var index = SolidCatalog.All.ToList().IndexOf(p);
+    <PageTitle>@p.Name · SOLID Showdown</PageTitle>
+
+    <section class="principle-hero">
+        <div class="big-letter">@p.Letter</div>
+        <div>
+            <h1>@p.Name</h1>
+            <p class="lead">@p.OneLiner</p>
+        </div>
+    </section>
+
+    <section class="principle-intro">
+        <blockquote class="definition">
+            <p>“@p.Definition”</p>
+            <cite>@p.DefinitionSource</cite>
+        </blockquote>
+
+        <div class="intro-grid">
+            <div class="panel">
+                <h2>Key ideas</h2>
+                <ul>@foreach (var idea in p.KeyIdeas) { <li>@idea</li> }</ul>
+            </div>
+            <div class="panel panel-depends">
+                <h2>🤔 Where it depends</h2>
+                <ul>@foreach (var note in p.ItDepends) { <li>@note</li> }</ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="examples">
+        <h2 class="section-title">Examples</h2>
+        <div class="example-tabs" role="tablist">
+            @for (var i = 0; i < p.Examples.Count; i++)
+            {
+                var ex = p.Examples[i];
+                var n = i;
+                <button role="tab" class="example-tab @(ex == _example ? "active" : "")" aria-selected="@(ex == _example)"
+                        @onclick="() => _example = p.Examples[n]">
+                    <span class="example-tab-num">Example @(n + 1)</span>
+                    <span class="example-tab-title">@ex.Title</span>
+                </button>
+            }
+        </div>
+        @if (_example is not null)
+        {
+            <ExampleView @key="_example.Id" Principle="p" Example="_example" />
+        }
+    </section>
+
+    <section class="block quiz-block">
+        <div class="block-head">
+            <span class="step">?</span>
+            <div>
+                <h3>Check yourself</h3>
+                <p class="hint">Short questions, each with an explanation.</p>
+            </div>
+        </div>
+        <Quiz @key="p.Slug" Questions="p.Quiz" />
+    </section>
+
+    <nav class="pager">
+        @if (index > 0)
+        {
+            var prev = SolidCatalog.All[index - 1];
+            <a class="pager-link" href="@($"principle/{prev.Slug}")">← @prev.Letter · @prev.Name</a>
+        }
+        else { <a class="pager-link" href="">← Overview</a> }
+        @if (index < SolidCatalog.All.Count - 1)
+        {
+            var next = SolidCatalog.All[index + 1];
+            <a class="pager-link next" href="@($"principle/{next.Slug}")">@next.Letter · @next.Name →</a>
+        }
+        else { <a class="pager-link next" href="">Overview →</a> }
+    </nav>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private PrincipleInfo? _principle;
+    private Example? _example;
+
+    protected override void OnParametersSet()
+    {
+        var found = SolidCatalog.Find(Slug);
+        if (found == _principle) return;
+        _principle = found;
+        _example = found?.Examples.FirstOrDefault();
+    }
+}

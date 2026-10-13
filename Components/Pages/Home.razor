@@ -1,0 +1,47 @@
+@page "/"
+
+<PageTitle>SOLID Showdown</PageTitle>
+
+<section class="hero">
+    <h1>SOLID, one principle at a time</h1>
+    <p class="lead">
+        Each principle has two or more worked examples. Every example puts a design that <span class="t-bad">breaks</span> the principle
+        next to one that <span class="t-good">follows</span> it. You can apply real change requests to both and watch what each one
+        has to touch, then run the actual C#.
+    </p>
+</section>
+
+<section class="cards">
+    @foreach (var p in SolidCatalog.All)
+    {
+        <a class="card" href="@($"principle/{p.Slug}")">
+            <span class="card-letter">@p.Letter</span>
+            <span class="card-body">
+                <span class="card-name">@p.Name</span>
+                <span class="card-line">@p.OneLiner</span>
+                <span class="card-meta">@p.Examples.Count examples · @p.Quiz.Count quiz questions</span>
+            </span>
+        </a>
+    }
+</section>
+
+<section class="how">
+    <h2>How each page works</h2>
+    <ol class="how-steps">
+        <li><strong>Structure &amp; change impact.</strong> Class diagrams of both designs. Pick a change request (“add a format”, “the CFO changes overtime”) and every box is coloured by what happens to it: modified, added, re-tested or broken.</li>
+        <li><strong>The code.</strong> The real source, side by side. ❌ and ✅ comments mark the key lines, and <em>🤔 CONTEXT</em> comments discuss when the rule does or doesn’t apply.</li>
+        <li><strong>Run it.</strong> Both designs face the same checks. LSP runs contract tests against every subtype, and ISP calls every interface method through reflection to see which ones really work.</li>
+        <li><strong>It depends.</strong> Notes on when the “bad” version is actually fine.</li>
+    </ol>
+</section>
+
+<section class="depends">
+    <h2>A note on “it depends”</h2>
+    <p>
+        SOLID principles are heuristics for managing <em>change</em>, not laws. Each one only pays off relative to some context:
+        SRP depends on who the actors are, OCP is only ever closed against the kinds of change you anticipated, LSP depends on the
+        contract you actually promise, ISP depends on what your clients use, and DIP is only worth it for volatile dependencies.
+        Each page has a “Where it depends” panel, and several change scenarios deliberately show the <em>good</em> design
+        having to change too.
+    </p>
+</section>

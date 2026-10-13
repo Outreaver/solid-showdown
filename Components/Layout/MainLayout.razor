@@ -1,0 +1,29 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" href="">
+            <span class="brand-mark">S</span>
+            <span>SOLID Showdown</span>
+        </a>
+        <nav class="letters" aria-label="Principles">
+            @foreach (var p in SolidCatalog.All)
+            {
+                <NavLink class="letter" href="@($"principle/{p.Slug}")" title="@p.Name">@p.Letter</NavLink>
+            }
+        </nav>
+    </div>
+</header>
+
+<main class="page">
+    @Body
+</main>
+
+<footer class="footer">
+    Every example is compiled into this app. The diagrams, code and demo output all come from the same source.
+</footer>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Something went wrong. <a href="." class="reload">Reload</a>
+</div>

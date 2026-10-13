@@ -1,0 +1,204 @@
+@* Renders a Diagram as SVG and colours each box by its Impact for the selected change scenario. *@
+
+<div class="diagram-wrap">
+    <svg viewBox="0 0 @F(_width) @F(_height)" style="max-width:@F(_width)px; min-width:@F(Math.Min(_width, 520))px" role="img" aria-label="@AriaLabel">
+        <defs>
+            <marker id="@Id("uses")" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" class="mk-uses" />
+            </marker>
+            <marker id="@Id("implements")" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto-start-reverse">
+                <path d="M1,1 L11,6 L1,11 z" class="mk-impl" />
+            </marker>
+            <marker id="@Id("creates")" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" class="mk-creates" />
+            </marker>
+            <marker id="@Id("requests")" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" class="mk-requests" />
+            </marker>
+        </defs>
+
+        @foreach (var band in Diagram.Bands)
+        {
+            var (bx, by, bw, bh) = BandRect(band);
+            <g class="band">
+                <rect x="@F(bx)" y="@F(by)" width="@F(bw)" height="@F(bh)" rx="10" />
+                @Txt(band.Label, ("x", F(bx + 10)), ("y", F(by + 16)))
+            </g>
+        }
+
+        @foreach (var e in _edges)
+        {
+            var (x1, y1, x2, y2) = Clip(e.Edge);
+            <g class="edge edge-@e.Edge.Kind.ToString().ToLowerInvariant() @(e.IsNew ? "edge-new" : "")">
+                <line x1="@F(x1)" y1="@F(y1)" x2="@F(x2)" y2="@F(y2)" marker-end="url(#@Id(e.Edge.Kind.ToString().ToLowerInvariant()))" />
+                @if (e.Edge.Label is { } label)
+                {
+                    var mx = (x1 + x2) / 2; var my = (y1 + y2) / 2;
+                    <rect class="edge-label-bg" x="@F(mx - label.Length * 3.4 - 5)" y="@F(my - 9)" width="@F(label.Length * 6.8 + 10)" height="17" rx="4" />
+                    @Txt(label, ("class", "edge-label"), ("x", F(mx)), ("y", F(my + 4)), ("text-anchor", "middle"))
+                }
+            </g>
+        }
+
+        @foreach (var n in _nodes)
+        {
+            var b = n.Box;
+            <g class="node node-@n.Node.Kind.ToString().ToLowerInvariant() @ImpactClass(n.Impact)">
+                <title>@Tooltip(n)</title>
+                <rect x="@F(b.X)" y="@F(b.Y)" width="@F(b.W)" height="@F(b.H)" rx="@(n.Node.Kind == NodeKind.Actor ? 28 : 8)" />
+                @{ var y = b.Y + 20; }
+                @if (n.Node.Kind == NodeKind.Interface)
+                {
+                    @Txt("«abstraction»", ("class", "stereo"), ("x", F(b.X + b.W / 2)), ("y", F(y - 4)), ("text-anchor", "middle"))
+                    y += 12;
+                }
+                @if (n.Node.Kind == NodeKind.Actor)
+                {
+                    @Txt("actor", ("class", "stereo"), ("x", F(b.X + b.W / 2)), ("y", F(y - 4)), ("text-anchor", "middle"))
+                    y += 12;
+                }
+                @Txt(n.Node.Label, ("class", "label"), ("x", F(b.X + b.W / 2)), ("y", F(y)), ("text-anchor", "middle"))
+                @foreach (var line in n.NoteLines)
+                {
+                    y += 14;
+                    @Txt(line, ("class", "note"), ("x", F(b.X + b.W / 2)), ("y", F(y)), ("text-anchor", "middle"))
+                }
+                @if (n.Impact is { } impact)
+                {
+                    <g class="badge">
+                        <circle cx="@F(b.X + b.W - 4)" cy="@F(b.Y + 4)" r="11" />
+                        @Txt(BadgeGlyph(impact), ("x", F(b.X + b.W - 4)), ("y", F(b.Y + 8.5)), ("text-anchor", "middle"))
+                    </g>
+                }
+            </g>
+        }
+    </svg>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Diagram Diagram { get; set; } = default!;
+    [Parameter] public VariantImpact? Impact { get; set; }
+    [Parameter] public string AriaLabel { get; set; } = "Class diagram";
+
+    private const double ColW = 210, RowH = 100, BoxW = 186, Pad = 24, NoteChars = 27;
+
+    private sealed record Box(double X, double Y, double W, double H)
+    {
+        public double Cx => X + W / 2;
+        public double Cy => Y + H / 2;
+    }
+
+    private sealed record PlacedNode(Node Node, Box Box, Impact? Impact, string[] NoteLines);
+    private sealed record PlacedEdge(Edge Edge, bool IsNew);
+
+    private readonly string _uid = Guid.NewGuid().ToString("N")[..8];
+    private List<PlacedNode> _nodes = [];
+    private List<PlacedEdge> _edges = [];
+    private Dictionary<string, Box> _boxes = [];
+    private double _width, _height, _minCol, _minRow, _top;
+
+    protected override void OnParametersSet()
+    {
+        var newNodes = Impact?.NewNodes ?? [];
+        var all = Diagram.Nodes.Concat(newNodes).ToList();
+        var newIds = newNodes.Select(n => n.Id).ToHashSet();
+
+        var cols = all.Select(n => n.Col).Concat(Diagram.Bands.SelectMany(b => new[] { b.FromCol, b.ToCol }).OfType<double>()).ToList();
+        _minCol = cols.Min();
+        _minRow = Math.Min(all.Min(n => n.Row), Diagram.Bands.Select(b => b.FromRow).DefaultIfEmpty(0).Min());
+        _top = Pad + (Diagram.Bands.Count > 0 ? 26 : 0); // room for the band label above the first row
+
+        _nodes = all.Select(n =>
+        {
+            var lines = Wrap(n.Note);
+            var height = 34 + lines.Length * 14 + (n.Kind is NodeKind.Interface or NodeKind.Actor ? 12 : 0);
+            var cx = Pad + (n.Col - _minCol) * ColW + BoxW / 2;
+            var cy = _top + (n.Row - _minRow) * RowH + 34;
+            var box = new Box(cx - BoxW / 2, cy - height / 2, BoxW, height);
+            Impact? impact = Impact?.Nodes.TryGetValue(n.Id, out var i) == true ? i : newIds.Contains(n.Id) ? SolidShowdown.Catalog.Impact.Added : null;
+            return new PlacedNode(n, box, impact, lines);
+        }).ToList();
+        _boxes = _nodes.ToDictionary(n => n.Node.Id, n => n.Box);
+
+        _edges = [.. Diagram.Edges.Select(e => new PlacedEdge(e, false)), .. (Impact?.NewEdges ?? []).Select(e => new PlacedEdge(e, true))];
+
+        // Width first (full-width bands stretch to it), then height including every band.
+        var maxX = _nodes.Max(n => n.Box.X + n.Box.W);
+        foreach (var band in Diagram.Bands.Where(b => b.ToCol is not null))
+        {
+            var (bx, _, bw, _) = BandRect(band);
+            maxX = Math.Max(maxX, bx + bw);
+        }
+        _width = maxX + Pad;
+
+        var maxY = _nodes.Max(n => n.Box.Y + n.Box.H);
+        foreach (var band in Diagram.Bands)
+        {
+            var (_, by, _, bh) = BandRect(band);
+            maxY = Math.Max(maxY, by + bh);
+        }
+        _height = maxY + Pad;
+    }
+
+    // Band coordinates are the rows/columns of the first and last node they enclose.
+    private (double X, double Y, double W, double H) BandRect(Band band)
+    {
+        var x1 = band.FromCol is { } fc ? Pad + (fc - _minCol) * ColW - 12 : 8;
+        var x2 = band.ToCol is { } tc ? Pad + (tc - _minCol) * ColW + BoxW + 12 : (_width > 0 ? _width - 8 : x1 + 400);
+        var y1 = _top + (band.FromRow - _minRow) * RowH - 24;
+        var y2 = _top + (band.ToRow - _minRow) * RowH + 34 + 48;
+        return (x1, y1, x2 - x1, y2 - y1);
+    }
+
+    /// <summary>Line between two box centres, trimmed so it starts/ends on each box's border.</summary>
+    private (double, double, double, double) Clip(Edge e)
+    {
+        if (!_boxes.TryGetValue(e.From, out var a) || !_boxes.TryGetValue(e.To, out var b))
+            throw new InvalidOperationException($"Diagram edge {e.From} → {e.To} references an unknown node.");
+
+        double dx = b.Cx - a.Cx, dy = b.Cy - a.Cy;
+        static double T(Box box, double dx, double dy) =>
+            Math.Min(dx == 0 ? double.MaxValue : (box.W / 2 + 3) / Math.Abs(dx), dy == 0 ? double.MaxValue : (box.H / 2 + 3) / Math.Abs(dy));
+        var ta = T(a, dx, dy);
+        var tb = T(b, dx, dy);
+        return (a.Cx + dx * ta, a.Cy + dy * ta, b.Cx - dx * tb, b.Cy - dy * tb);
+    }
+
+    private static string[] Wrap(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return [];
+        var lines = new List<string>();
+        var current = "";
+        foreach (var word in text.Split(' '))
+        {
+            if (current.Length > 0 && current.Length + 1 + word.Length > NoteChars) { lines.Add(current); current = word; }
+            else current = current.Length == 0 ? word : current + " " + word;
+        }
+        if (current.Length > 0) lines.Add(current);
+        return [.. lines];
+    }
+
+    // Razor reserves <text>, so SVG text elements are emitted as markup strings.
+    private static MarkupString Txt(object content, params (string Name, string Value)[] attributes)
+    {
+        var attrs = string.Concat(attributes.Select(a => $" {a.Name}=\"{System.Net.WebUtility.HtmlEncode(a.Value)}\""));
+        return new($"<text{attrs}>{System.Net.WebUtility.HtmlEncode(content.ToString())}</text>");
+    }
+
+    private string Id(string kind) => $"m-{_uid}-{kind}";
+
+    private static string F(double v) => v.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static string ImpactClass(Impact? impact) => impact is { } i ? "impact-" + i.ToString().ToLowerInvariant() : "";
+
+    private static string BadgeGlyph(Impact impact) => impact switch
+    {
+        SolidShowdown.Catalog.Impact.Modified => "✎",
+        SolidShowdown.Catalog.Impact.Added => "+",
+        SolidShowdown.Catalog.Impact.Broken => "!",
+        _ => "↻",
+    };
+
+    private static string Tooltip(PlacedNode n) =>
+        $"{n.Node.Label}{(n.Node.Note is { } note ? " — " + note : "")}{(n.Impact is { } i ? $" [{ImpactText.Label(i)}]" : "")}";
+}

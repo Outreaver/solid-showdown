@@ -1,0 +1,25 @@
+@* One tab per file. Example sides can have several (e.g. "before" and "after the change request"). *@
+
+<div class="code-tabs">
+    <div class="tabs" role="tablist">
+        @foreach (var path in Paths)
+        {
+            <button role="tab" class="tab @(path == _active ? "active" : "")" aria-selected="@(path == _active)"
+                    @onclick="() => _active = path">@FileName(path)</button>
+        }
+    </div>
+    <CodeView Path="@_active" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string[] Paths { get; set; } = [];
+
+    private string _active = "";
+
+    protected override void OnParametersSet()
+    {
+        if (!Paths.Contains(_active)) _active = Paths.FirstOrDefault() ?? "";
+    }
+
+    private static string FileName(string path) => path[(path.LastIndexOf('/') + 1)..];
+}

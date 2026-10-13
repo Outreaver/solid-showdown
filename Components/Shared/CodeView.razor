@@ -1,0 +1,29 @@
+@* Shows an embedded example file with line numbers and light syntax highlighting. *@
+
+<div class="code">
+    <table>
+        <tbody>
+            @for (var i = 0; i < _lines.Count; i++)
+            {
+                <tr>
+                    <td class="ln">@(i + 1)</td>
+                    <td class="src">@((MarkupString)_lines[i])</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Path { get; set; } = "";
+
+    private IReadOnlyList<string> _lines = [];
+    private string? _loaded;
+
+    protected override void OnParametersSet()
+    {
+        if (_loaded == Path) return;
+        _lines = SourceCode.HighlightLines(SourceCode.Read(Path));
+        _loaded = Path;
+    }
+}

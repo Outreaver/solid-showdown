@@ -1,0 +1,174 @@
+@* One example: structure + change scenarios, code, runnable demos, and context notes. *@
+
+<article class="example">
+    <p class="example-summary">@Example.Summary</p>
+
+    @* ---------- 1. Structure & change impact ---------- *@
+    <section class="block">
+        <div class="block-head">
+            <span class="step">1</span>
+            <div>
+                <h3>Structure &amp; change impact</h3>
+                <p class="hint">Pick a change request. Each design highlights what it has to touch.</p>
+            </div>
+        </div>
+
+        <div class="scenario-picker" role="radiogroup" aria-label="Change requests">
+            <button class="chip @(_scenario is null ? "active" : "")" role="radio" aria-checked="@(_scenario is null)"
+                    @onclick="() => _scenario = null">
+                <span class="chip-title">As designed</span><span class="chip-sub">no change yet</span>
+            </button>
+            @foreach (var s in Example.Scenarios)
+            {
+                <button class="chip @(_scenario == s ? "active" : "")" role="radio" aria-checked="@(_scenario == s)"
+                        @onclick="() => _scenario = s">
+                    <span class="chip-title">@s.Title</span><span class="chip-sub">requested by @s.RequestedBy</span>
+                </button>
+            }
+        </div>
+
+        @if (_scenario is { } current)
+        {
+            <p class="scenario-desc"><strong>@current.RequestedBy:</strong> “@current.Description”</p>
+        }
+
+        <div class="compare">
+            @foreach (var side in Sides)
+            {
+                var impact = _scenario is null ? null : side.IsGood ? _scenario.Good : _scenario.Bad;
+                <div class="side @(side.IsGood ? "good" : "bad")">
+                    <div class="side-head">
+                        <span class="verdict">@(side.IsGood ? "✅ Follows" : "❌ Breaks") @Principle.Letter</span>
+                        <span class="side-title">@side.Variant.Headline</span>
+                    </div>
+                    <DiagramView Diagram="side.Variant.Diagram" Impact="impact"
+                                 AriaLabel="@($"{(side.IsGood ? "Design that follows" : "Design that breaks")} {Principle.Name}")" />
+                    @if (impact is null)
+                    {
+                        <p class="side-text">@side.Variant.Explanation</p>
+                    }
+                    else
+                    {
+                        <div class="impact-box">
+                            <div class="impact-counts">@ImpactText.Counts(impact)</div>
+                            <p>@impact.Summary</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (_scenario is { } lesson)
+        {
+            <div class="lesson"><span class="lesson-tag">Takeaway</span> @lesson.Lesson</div>
+        }
+
+        <DiagramLegend />
+    </section>
+
+    @* ---------- 2. Code ---------- *@
+    <section class="block">
+        <div class="block-head">
+            <span class="step">2</span>
+            <div>
+                <h3>The code</h3>
+                <p class="hint">Real C# compiled into this app. Comments marked ❌ / ✅ point at the key lines, and 🤔 CONTEXT comments discuss the trade-offs.</p>
+            </div>
+        </div>
+        <div class="compare">
+            @foreach (var side in Sides)
+            {
+                <div class="side @(side.IsGood ? "good" : "bad")">
+                    <div class="side-head">
+                        <span class="verdict">@(side.IsGood ? "✅ Follows" : "❌ Breaks") @Principle.Letter</span>
+                    </div>
+                    <CodeTabs Paths="side.Variant.SourcePaths" />
+                </div>
+            }
+        </div>
+    </section>
+
+    @* ---------- 3. Run it ---------- *@
+    <section class="block">
+        <div class="block-head">
+            <span class="step">3</span>
+            <div>
+                <h3>Run it</h3>
+                <p class="hint">The demos call the code above. Same scenario, same checks, two designs.</p>
+            </div>
+            <button class="btn btn-primary run-both" @onclick="RunBoth">▶ Run both</button>
+        </div>
+        <div class="compare">
+            @foreach (var side in Sides)
+            {
+                var log = side.IsGood ? _goodLog : _badLog;
+                <div class="side @(side.IsGood ? "good" : "bad")">
+                    <div class="side-head">
+                        <span class="verdict">@(side.IsGood ? "✅ Follows" : "❌ Breaks") @Principle.Letter</span>
+                        <button class="btn btn-small" @onclick="() => Run(side.IsGood)">▶ Run</button>
+                    </div>
+                    @if (log is null)
+                    {
+                        <div class="console console-empty">Press ▶ Run to execute this design's demo.</div>
+                    }
+                    else
+                    {
+                        <DemoOutput Log="log" />
+                    }
+                </div>
+            }
+        </div>
+        <details class="harness">
+            <summary>Show the demo harness (Demo.cs)</summary>
+            <CodeView Path="@Example.DemoSourcePath" />
+        </details>
+    </section>
+
+    @* ---------- 4. Context ---------- *@
+    <section class="block">
+        <div class="block-head">
+            <span class="step">4</span>
+            <div>
+                <h3>It depends: context for this example</h3>
+            </div>
+        </div>
+        <ul class="context-list">
+            @foreach (var note in Example.ContextNotes)
+            {
+                <li>@note</li>
+            }
+        </ul>
+    </section>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public PrincipleInfo Principle { get; set; } = default!;
+    [Parameter, EditorRequired] public Example Example { get; set; } = default!;
+
+    private sealed record Side(Variant Variant, bool IsGood);
+
+    private Side[] Sides => [new(Example.Bad, false), new(Example.Good, true)];
+
+    private ChangeScenario? _scenario;
+    private DemoLog? _badLog, _goodLog;
+
+    private void RunBoth()
+    {
+        Run(false);
+        Run(true);
+    }
+
+    private void Run(bool good)
+    {
+        var log = new DemoLog();
+        try
+        {
+            (good ? Example.Good : Example.Bad).Run(log);
+        }
+        catch (Exception ex)
+        {
+            log.Fail($"Unhandled {ex.GetType().Name}: {ex.Message}");
+        }
+        if (good) _goodLog = log; else _badLog = log;
+    }
+}

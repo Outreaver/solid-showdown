@@ -1,0 +1,26 @@
+<details class="legend">
+    <summary>How to read the diagrams</summary>
+    <div class="legend-grid">
+        <div class="legend-col">
+            <h4>Boxes</h4>
+            <div class="lg"><span class="sw sw-class"></span> class</div>
+            <div class="lg"><span class="sw sw-interface"></span> «abstraction»: interface or abstract class</div>
+            <div class="lg"><span class="sw sw-actor"></span> actor: a person or team who requests changes</div>
+            <div class="lg"><span class="sw sw-external"></span> external thing (server, clock, tests, wiring)</div>
+        </div>
+        <div class="legend-col">
+            <h4>Arrows (source-code dependencies)</h4>
+            <div class="lg"><svg width="46" height="12"><line x1="2" y1="6" x2="36" y2="6" class="lg-uses" /><path d="M36,1 L44,6 L36,11 z" class="mk-uses" /></svg> uses / calls</div>
+            <div class="lg"><svg width="46" height="12"><line x1="2" y1="6" x2="34" y2="6" class="lg-impl" /><path d="M34,1 L44,6 L34,11 z" class="mk-impl" /></svg> implements / inherits</div>
+            <div class="lg"><svg width="46" height="12"><line x1="2" y1="6" x2="36" y2="6" class="lg-creates" /><path d="M36,1 L44,6 L36,11 z" class="mk-creates" /></svg> creates with <code>new</code></div>
+            <div class="lg"><svg width="46" height="12"><line x1="2" y1="6" x2="36" y2="6" class="lg-requests" /><path d="M36,1 L44,6 L36,11 z" class="mk-requests" /></svg> asks for changes</div>
+        </div>
+        <div class="legend-col">
+            <h4>Impact of a change request</h4>
+            @foreach (var impact in Enum.GetValues<Impact>())
+            {
+                <div class="lg"><span class="sw sw-@impact.ToString().ToLowerInvariant()"></span> <strong>@ImpactText.Label(impact)</strong>: @ImpactText.Describe(impact)</div>
+            }
+        </div>
+    </div>
+</details>
