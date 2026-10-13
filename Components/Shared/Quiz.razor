@@ -55,9 +55,10 @@
     // The catalog lists options in authoring order (the correct one is often second), so they are
     // shuffled for display. Seeded from the question text, so the order is the same on every render
     // and every machine, and answers are still stored as indices into question.Options.
+    // Editing a question's text reshuffles it, so re-check the spread when you change the quiz.
     public static int[] DisplayOrder(QuizQuestion question)
     {
-        var seed = 17;
+        var seed = 1935; // picked so correct answers spread evenly over A–D, with no letter repeated within a principle
         foreach (var c in question.Question) seed = unchecked(seed * 31 + c);
         var order = Enumerable.Range(0, question.Options.Length).ToArray();
         new Random(seed).Shuffle(order);
