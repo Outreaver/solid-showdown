@@ -40,7 +40,7 @@ public sealed class HourReporter
     public string Report(EmployeeData e)
     {
         var regular = e.Week.Sum(x => Math.Min(x.Hours, RegularHoursPerDay));
-        return $"{e.Name}: {regular} regular h, {e.TotalHours - regular} overtime h";
+        return $"{e.Name}: {regular:0.##} regular h, {e.TotalHours - regular:0.##} overtime h";
     }
 }
 

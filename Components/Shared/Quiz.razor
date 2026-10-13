@@ -4,6 +4,7 @@
         var index = q;
         var question = Questions[index];
         var chosen = _answers.GetValueOrDefault(index, -1);
+        var order = DisplayOrder(question);
         <div class="quiz-q">
             <p class="quiz-title"><span class="quiz-num">@(index + 1)</span> @question.Question</p>
             @if (question.Code is { } code)
@@ -18,12 +19,13 @@
                 </div>
             }
             <div class="quiz-options">
-                @for (var o = 0; o < question.Options.Length; o++)
+                @for (var o = 0; o < order.Length; o++)
                 {
-                    var option = o;
+                    var position = o;
+                    var option = order[position];
                     var state = chosen < 0 ? "" : option == question.CorrectIndex ? "correct" : option == chosen ? "wrong" : "dim";
                     <button class="quiz-option @state" disabled="@(chosen >= 0)" @onclick="() => _answers[index] = option">
-                        <span class="quiz-letter">@((char)('A' + option))</span> @question.Options[option]
+                        <span class="quiz-letter">@((char)('A' + position))</span> @question.Options[option]
                     </button>
                 }
             </div>
@@ -49,4 +51,16 @@
     [Parameter, EditorRequired] public IReadOnlyList<QuizQuestion> Questions { get; set; } = [];
 
     private readonly Dictionary<int, int> _answers = [];
+
+    // The catalog lists options in authoring order (the correct one is often second), so they are
+    // shuffled for display. Seeded from the question text, so the order is the same on every render
+    // and every machine, and answers are still stored as indices into question.Options.
+    public static int[] DisplayOrder(QuizQuestion question)
+    {
+        var seed = 17;
+        foreach (var c in question.Question) seed = unchecked(seed * 31 + c);
+        var order = Enumerable.Range(0, question.Options.Length).ToArray();
+        new Random(seed).Shuffle(order);
+        return order;
+    }
 }

@@ -11,7 +11,7 @@ internal static class Lsp
         Letter: "L",
         Name: "Liskov Substitution Principle",
         OneLiner: "Subtypes must be usable through the base type without surprises.",
-        Definition: "If S is a subtype of T, then objects of type T may be replaced with objects of type S without altering any of the desirable properties of the program.",
+        Definition: "Let φ(x) be a property provable about objects x of type T. Then φ(y) should be true for objects y of type S where S is a subtype of T.",
         DefinitionSource: "Barbara Liskov & Jeannette Wing, A Behavioral Notion of Subtyping (1994), after Liskov's 1987 keynote",
         KeyIdeas:
         [
@@ -85,7 +85,7 @@ internal static class Lsp
             new("\"Fix\" the banner bug", "Any developer",
                 "Make BannerLayout work for squares.",
                 Impacts("BannerLayout grows an `if (r is Square)` branch, and so does every other Rectangle client. Each new subtype adds more of these.",
-                    Mod("BannerLayout"), Mod("Contract tests")),
+                    Mod("BannerLayout")),
                 Impacts("Nothing to fix."),
                 "Type checks in clients are the classic symptom of an LSP violation, and they turn it into an OCP violation as well."),
             new("Add a Circle", "Product",
@@ -129,7 +129,7 @@ internal static class Lsp
                     Cls("MonthlyFeeJob", 0.5, 0),
                     Ifc("IWithdrawable", 0.5, 1.3, "FeeFor · OverdraftLimit · Withdraw"), Cls("Account", 2.3, 1.3, "abstract: Balance · Deposit"),
                     Cls("CheckingAccount", 1, 2.6), Cls("FixedTermDeposit", 2.6, 2.6, "no Withdraw at all"),
-                    Cls("PayAsYouGoAccount", 0.3, 3.9, "FeeFor = 1.00"), Cls("OverdraftAccount", 1.7, 3.9, "accepts more (OK!)"),
+                    Cls("PayAsYouGoAccount", 0.3, 3.9, "FeeFor = 1.00"), Cls("OverdraftAccount", 1.7, 3.9, "OverdraftLimit in the contract"),
                 ],
                 Uses("MonthlyFeeJob", "IWithdrawable"),
                 Impl("CheckingAccount", "IWithdrawable"), Impl("CheckingAccount", "Account"), Impl("FixedTermDeposit", "Account"),
@@ -162,6 +162,6 @@ internal static class Lsp
         ContextNotes:
         [
             "If Account had documented \"balance decreases by amount plus applicable fees\", PayAsYouGoAccount would not be a violation. Contracts decide.",
-            "OverdraftAccount is a subtype that behaves differently and still satisfies LSP, because it only requires less.",
+            "OverdraftAccount and PayAsYouGoAccount behave differently from CheckingAccount and still satisfy LSP, because IWithdrawable states its rules in terms of OverdraftLimit and FeeFor and never promises a non-negative balance. A client that assumed Balance >= 0 would be relying on something the contract doesn't say.",
         ]);
 }

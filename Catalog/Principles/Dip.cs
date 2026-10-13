@@ -101,8 +101,8 @@ internal static class Dip
                 "Testability is the everyday payoff of DIP, because the volatile thing can be replaced."),
             new("Mail library major upgrade", "IT Ops",
                 "The SMTP library's API changes.",
-                Impacts("SmtpEmailSender changes, and since OrderService calls its API directly, the business class is edited too.",
-                    Mod("SmtpEmailSender"), Mod("OrderService")),
+                Impacts("SmtpEmailSender is rewritten. OrderService creates and calls that concrete class, so it is rebuilt and re-tested with it, and if Send's signature changes the business class is edited too.",
+                    Mod("SmtpEmailSender"), Retest("OrderService")),
                 Impacts("Only the adapter (SmtpOrderNotifier) changes. The domain never saw the library's API.",
                     Mod("SmtpOrderNotifier")),
                 "Phrasing the abstraction in the domain's language keeps library churn out of your core."),
@@ -137,12 +137,12 @@ internal static class Dip
             Diagram(
                 [
                     Cls("TrialService", 0.5, 0), Ext("Tests", 1.9, 0),
-                    Ifc("TimeProvider", 0.5, 1.3, "abstract class (.NET 8+)"),
+                    Ifc("TimeProvider", 0.5, 1.3, "owned by .NET, not the domain"),
                     Cls("TimeProvider.System", 0, 2.6, "real clock"), Cls("FixedClock", 1.2, 2.6, "test fake"),
                 ],
                 Uses("TrialService", "TimeProvider"), Uses("Tests", "TrialService"), News("Tests", "FixedClock"),
                 Impl("TimeProvider.System", "TimeProvider"), Impl("FixedClock", "TimeProvider"))
-                .WithBands(DomainBand with { ToRow = 1.3 }, InfraBand with { ToRow = 2.6 }),
+                .WithBands(DomainBand, InfraBand with { ToRow = 2.6 }),
             Clock_Demo.RunGood),
         Scenarios:
         [
@@ -160,7 +160,7 @@ internal static class Dip
             new("Use a network-synchronised clock", "IT Ops",
                 "Servers drift, so licence checks should use an NTP-backed time source.",
                 Impacts("Every DateTime.UtcNow call in the codebase must be found and replaced.",
-                    Mod("TrialService"), Mod("DateTime.UtcNow")),
+                    Mod("TrialService")),
                 Impacts("A new TimeProvider subclass, wired in at the composition root.")
                     .Adding([Cls("NtpTimeProvider", 2.4, 2.6)], Impl("NtpTimeProvider", "TimeProvider")),
                 "Once a detail is behind an abstraction, swapping it is an extension (DIP enables OCP)."),
@@ -170,5 +170,6 @@ internal static class Dip
         [
             "Sometimes the simplest inversion is a parameter: IsExpired(user, now). The caller decides what \"now\" is.",
             "TimeProvider is an abstract class, not an interface. DIP asks for an abstraction, not for the `interface` keyword.",
+            "Strictly, this isn't full inversion: TimeProvider is owned by the .NET runtime, not by the domain. Depending on a stable abstraction the platform provides is a pragmatic shortcut. If you want the domain to own it, define an IClock in the domain and adapt TimeProvider to it.",
         ]);
 }

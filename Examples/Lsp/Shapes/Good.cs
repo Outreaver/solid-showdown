@@ -13,7 +13,6 @@ public sealed record Rectangle(double Width, double Height) : IShape
 {
     public double Area => Width * Height;
     public IShape Scale(double factor) => new Rectangle(Width * factor, Height * factor);
-    public Rectangle WithSize(double width, double height) => new(width, height);
 }
 
 public sealed record Square(double Side) : IShape
@@ -26,7 +25,7 @@ public sealed record Square(double Side) : IShape
 // Passing a Square here is now a COMPILE error instead of a runtime surprise.
 public static class BannerLayout
 {
-    public static double MakeBanner(Rectangle r) => r.WithSize(4, 1).Area;
+    public static Rectangle MakeBanner(Rectangle r) => r with { Width = 4, Height = 1 };
 }
 
 // 🤔 CONTEXT: LSP is about behaviour (the contract clients rely on), not about taxonomy.

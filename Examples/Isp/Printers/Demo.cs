@@ -28,7 +28,7 @@ public static class Demo
 
         log.Header("A client that needs to fax must ask for IFax");
         log.Ok("new PrintJobService(new BasicInkjet()) - compiles, PrintJobService only needs IPrinter");
-        log.Ok("SendFax(new BasicInkjet()) - doesn't compile: BasicInkjet is not an IFax");
+        log.Muted("Passing a BasicInkjet where an IFax is required wouldn't compile: BasicInkjet is not an IFax.");
         log.Info(new Good.PrintJobService(new Good.BasicInkjet()).PrintAll(["a.pdf", "b.pdf"]));
     }
 }

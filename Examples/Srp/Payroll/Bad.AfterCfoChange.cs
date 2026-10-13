@@ -25,7 +25,7 @@ public class Employee(string name, decimal hourlyRate, IReadOnlyList<TimeEntry> 
     }
 
     public string ReportHours() =>
-        $"{Name}: {RegularHours()} regular h, {TotalHours - RegularHours()} overtime h";
+        $"{Name}: {RegularHours():0.##} regular h, {TotalHours - RegularHours():0.##} overtime h";
 
     public string Save() =>
         $"INSERT INTO employees (name, rate) VALUES ('{Name}', {HourlyRate})";

@@ -43,8 +43,9 @@ public sealed class Checkout
 
 // 🤔 CONTEXT: "closed" is only ever closed AGAINST SOMETHING.
 //    This design is closed against "new kinds of customer". It is NOT closed against
-//    "discount depends on the whole cart" (spend 500, get 10% off) - Price(decimal basePrice)
-//    simply doesn't receive the cart. That request forces us to MODIFY the interface and
+//    "each customer kind gets its own cart-based discount" (Premium: spend 500, get 10% off) -
+//    Price(decimal basePrice) simply doesn't receive the cart. (A flat cart discount for
+//    everyone could live in Checkout as a separate rule; it's the per-kind part that hurts.) That request forces us to MODIFY the interface and
 //    every implementation. No class can be open to every possible extension; trying to
 //    anticipate everything produces speculative, hard-to-read abstractions.
 //    Practical rule ("fool me once"): write the simple version first; when the first change

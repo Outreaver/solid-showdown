@@ -17,7 +17,7 @@ internal static class Ocp
         [
             "Adding new behaviour shouldn't require editing code that already works and is already tested.",
             "In practice: put the part that varies behind an abstraction (an interface, a strategy, a plug-in) and add new implementations.",
-            "The smell to watch for is the same switch or if/else on a type code repeated in several places (\"shotgun surgery\").",
+            "The smell to watch for is the same switch or if/else on a type code repeated in several places (Fowler's \"Repeated Switches\"). Each new case then means shotgun surgery.",
             "Modification doesn't disappear. It moves to the edges, into the composition root or DI registration, away from the business rules.",
         ],
         ItDepends:
@@ -40,7 +40,7 @@ internal static class Ocp
                 ["Yes, every switch violates OCP.", "Probably not. The set of cases is closed and stable; nobody will add an 8th day.", "Yes, it should be a Strategy.", "Only if it isn't sealed."],
                 1,
                 "OCP targets axes of change that keep growing. A switch over a closed set is often the clearest code you can write."),
-            new("You built ICustomerPricing.Price(decimal basePrice). Marketing now wants discounts that depend on the whole cart. What does that tell you?", null,
+            new("You built ICustomerPricing.Price(decimal basePrice). Marketing now wants each customer kind to get its own discount based on the whole cart. What does that tell you?", null,
                 ["You applied OCP incorrectly.", "This is a kind of change the abstraction wasn't closed against. Modify it, and ask whether this axis will keep coming back.", "Never touch the interface; add a second, parallel one.", "Switch to reflection-based plug-ins."],
                 1,
                 "This is OCP's honest limit: closure is strategic. You protected against new customer kinds, not against new inputs to pricing. Modify it now, and you've learned which axis matters."),
@@ -53,7 +53,7 @@ internal static class Ocp
         Bad: new(
             [Src("Ocp/Discounts", "Bad.cs"), Src("Ocp/Discounts", "Bad.AfterStudent.cs")],
             "A type code switched on in more than one class",
-            "Adding a customer kind means editing the enum and every switch over it. The compiler can't tell you which switch you forgot.",
+            "Adding a customer kind means editing the enum and every switch over it. Because each switch ends in a catch-all `_ =>` case, the compiler can't tell you which one you forgot.",
             Diagram(
                 [
                     Cls("PriceCalculator", 0, 0.4, "switch (CustomerType)"), Cls("LoyaltyCalculator", 2, 0.4, "switch (CustomerType)"),
@@ -83,13 +83,13 @@ internal static class Ocp
                 Impacts("One new class. No existing file is opened, and the interface forces a decision about loyalty points.")
                     .Adding([Cls("StudentPricing", 3, 2.6)], Impl("StudentPricing", "ICustomerPricing")),
                 "This is the axis the design was built for, and adding a variant is purely additive. Run the demos to see the forgotten case."),
-            new("Spend over 500 → extra 10% off", "Marketing",
-                "The discount now depends on the whole cart, not just the item price.",
-                Impacts("PriceCalculator needs the cart. Its signature and every caller change.",
+            new("Per-kind cart discounts", "Marketing",
+                "Premium customers who spend over 500 get an extra 10% off, students over 200 get 5%. Each kind's discount now depends on the whole cart.",
+                Impacts("PriceCalculator's switch needs the cart. Its signature and every caller change.",
                     Mod("PriceCalculator")),
-                Impacts("Price(decimal basePrice) doesn't receive the cart. The interface, every implementation and Checkout must change.",
+                Impacts("The rule varies per customer kind, so it belongs in ICustomerPricing, but Price(decimal basePrice) doesn't receive the cart. The interface, every implementation and Checkout must change.",
                     Mod("ICustomerPricing"), Mod("RegularPricing"), Mod("PremiumPricing"), Mod("StaffPricing"), Mod("Checkout")),
-                "This is OCP's limit made visible: the \"good\" design is closed against new customer kinds, not against new pricing inputs. No design can be open to every extension."),
+                "This is OCP's limit made visible: the \"good\" design is closed against new customer kinds, not against new pricing inputs. (A flat cart discount for everyone wouldn't touch the interface. It could be a separate rule in Checkout.) No design can be open to every extension."),
             new("Premium discount 10% → 12%", "Marketing",
                 "An existing rule changes.",
                 Impacts("One line in PriceCalculator.", Mod("PriceCalculator")),
@@ -143,7 +143,7 @@ internal static class Ocp
                 "Business code stays closed. The edit moves to wiring code, which is expected to change."),
             new("Add a Region column", "Sales",
                 "Every report row gets a Region.",
-                Impacts("Report and every branch of Export() change.",
+                Impacts("Report changes, and so do the CSV and Markdown branches of Export(). The JSON branch serialises the new field automatically, but it sits in the same method, so the whole exporter is re-tested.",
                     Mod("Report"), Mod("ReportExporter")),
                 Impacts("Report changes, and so do the hand-written CSV and Markdown formats. JSON serialises rows automatically, but should be re-checked.",
                     Mod("Report"), Mod("CsvFormat"), Mod("MarkdownFormat"), Retest("JsonFormat")),

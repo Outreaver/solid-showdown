@@ -21,7 +21,7 @@ public static class Demo
         log.Warn($"{outbox.SentEmails.Count} e-mail(s) sent, to {invoice.CustomerEmail}");
         log.Muted(outbox.SentEmails[0]);
         log.Warn("The tax test also exercised HTML rendering and e-mail delivery.");
-        log.Warn("A typo in Marketing's HTML could now fail Finance's test - and the other way round.");
+        log.Warn("A crash in Marketing's rendering or IT's mail code would now fail Finance's tax test.");
     }
 
     public static void RunGood(DemoLog log)

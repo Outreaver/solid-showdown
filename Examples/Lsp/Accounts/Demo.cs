@@ -60,7 +60,7 @@ public static class Demo
         var accounts = subjects.Select(s => s.Item2()).ToList();
         Good.MonthlyFeeJob.ChargeAll(accounts, 5);
         log.Ok($"all withdrawable accounts charged - balances: {string.Join(", ", accounts.Select(a => a.Balance.ToString("0.00")))}");
-        log.Ok("new FixedTermDeposit(...) is not IWithdrawable: passing it to ChargeAll doesn't compile.");
-        log.Muted("OverdraftAccount accepts MORE than its base (weaker precondition) - still substitutable.");
+        log.Muted("new FixedTermDeposit(...) is not IWithdrawable, so passing it to ChargeAll wouldn't compile.");
+        log.Muted("PayAsYouGo and Overdraft behave differently from Checking, yet pass: the contract is written in terms of FeeFor and OverdraftLimit.");
     }
 }

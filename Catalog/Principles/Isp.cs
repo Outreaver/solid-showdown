@@ -110,7 +110,7 @@ internal static class Isp
     private static Example Repository => new(
         Id: "repository",
         Title: "Repositories: one CRUD interface for everyone",
-        Summary: "A generic IRepository<T> used by a read-only report and implemented by an append-only audit log. The split into reader, appender and writer roles is the core idea of CQRS in miniature.",
+        Summary: "A generic IRepository<T> used by a read-only report and implemented by an append-only audit log. The split into reader, appender and writer roles is Command-Query Separation applied to interfaces, the same idea CQRS takes further.",
         Bad: new(
             [Src("Isp/Repository", "Bad.cs")],
             "Read-only clients and append-only stores share a CRUD interface",
@@ -141,8 +141,8 @@ internal static class Isp
         [
             new("Write a unit test for MonthlyReport", "Developer",
                 "It needs a fake order source.",
-                Impacts("The fake must implement 5 members. Add/Update/Delete are noise that has to throw or do nothing.")
-                    .Adding([Cls("FakeOrderRepository", 1.9, 0, "5 members, 3 irrelevant")], Impl("FakeOrderRepository", "IRepository<T>")),
+                Impacts("The fake must implement 5 members. The report only calls List; Get at least belongs to reading, but Add/Update/Delete are write-side noise that has to throw or do nothing.")
+                    .Adding([Cls("FakeOrderRepository", 1.9, 0, "5 members, 3 write-side")], Impl("FakeOrderRepository", "IRepository<T>")),
                 Impacts("The fake implements Get and List, and that's all.")
                     .Adding([Cls("FakeOrderReader", 1.2, 0, "2 members")], Impl("FakeOrderReader", "IReader<T>")),
                 "Test-double pain is one of the fastest ways to feel an ISP violation."),

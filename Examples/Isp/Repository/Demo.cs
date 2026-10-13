@@ -10,7 +10,7 @@ public static class Demo
     public static void RunBad(DemoLog log)
     {
         var dependency = typeof(Bad.IRepository<Bad.Order>);
-        Describe(log, "MonthlyReport", dependency, used: ["List"]);
+        Describe(log, "MonthlyReport", dependency, used: ["List"], sameRole: ["Get"]);
 
         log.Header("The audit log under a CRUD interface");
         Bad.IRepository<Bad.AuditEntry> audit = new Bad.AuditLogStore();
@@ -22,14 +22,13 @@ public static class Demo
     public static void RunGood(DemoLog log)
     {
         var dependency = typeof(Good.IReader<Good.Order>);
-        Describe(log, "MonthlyReport", dependency, used: ["List"],
-            unusedIsFine: "Get is unused today, but it belongs to the same cohesive \"read\" role. ISP doesn't demand a perfect fit, only no unrelated baggage.");
+        Describe(log, "MonthlyReport", dependency, used: ["List"], sameRole: ["Get"]);
 
         log.Header("The audit log with role interfaces");
         var audit = new Good.AuditLogStore();
         audit.Add(new(1, "user 42 logged in"));
         log.Check("AuditLogStore has no Delete/Update to call", () => typeof(Good.AuditLogStore).GetMethod("Delete") is null);
-        log.Ok("`audit.Delete(1)` would be a compile error.");
+        log.Muted("`audit.Delete(1)` would be a compile error.");
 
         var orders = new Good.OrderRepository();
         orders.Add(new(1, 120m, new(2026, 9, 3)));
@@ -37,7 +36,9 @@ public static class Demo
         log.Info($"Revenue for 2026-09: {new Good.MonthlyReport(orders).Revenue(2026, 9):0.00}");
     }
 
-    private static void Describe(DemoLog log, string client, Type dependency, string[] used, string? unusedIsFine = null)
+    // Unused members in the client's own role (Get, for a reader) aren't counted as noise:
+    // ISP doesn't demand a perfect fit, only no unrelated baggage. Same rule for both designs.
+    private static void Describe(DemoLog log, string client, Type dependency, string[] used, string[] sameRole)
     {
         var members = dependency.GetInterfaces().Prepend(dependency)
             .SelectMany(i => i.GetMethods(BindingFlags.Public | BindingFlags.Instance))
@@ -48,14 +49,15 @@ public static class Demo
         foreach (var m in members)
         {
             var isUsed = used.Contains(m);
-            var noise = !isUsed && unusedIsFine is null;
+            var noise = !isUsed && !sameRole.Contains(m);
             table.Rows.Add([new(m), isUsed ? new("yes", LineKind.Ok) : new("no", noise ? LineKind.Warn : LineKind.Muted), new("yes", noise ? LineKind.Warn : LineKind.Info)]);
         }
 
-        var unused = members.Length - used.Length;
-        if (unused == 0) log.Ok($"{client} sees {members.Length} member(s) and uses all of them.");
-        else if (unusedIsFine is not null) { log.Ok($"{client} sees {members.Length} members, uses {used.Length}."); log.Muted(unusedIsFine); }
-        else log.Warn($"{client} sees {members.Length} members, uses {used.Length}. The other {unused} are noise it is still coupled to.");
+        var noisy = members.Where(m => !used.Contains(m) && !sameRole.Contains(m)).ToArray();
+        var idle = members.Where(m => !used.Contains(m) && sameRole.Contains(m)).ToArray();
+        if (noisy.Length == 0) log.Ok($"{client} sees {members.Length} member(s), uses {used.Length}, and nothing it sees is unrelated.");
+        else log.Warn($"{client} sees {members.Length} members, uses {used.Length}. {string.Join("/", noisy)} are unrelated write-side noise it is still coupled to.");
+        if (idle.Length > 0) log.Muted($"{string.Join("/", idle)} is unused today, but belongs to the same cohesive \"read\" role, so it isn't counted as noise.");
 
         var canDelete = members.Contains("Delete");
         log.Check($"{client} cannot delete orders, even by mistake", () => !canDelete);

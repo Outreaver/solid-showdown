@@ -31,7 +31,7 @@ public class Employee(string name, decimal hourlyRate, IReadOnlyList<TimeEntry> 
 
     // HR's rule: the weekly hours report used for labour-law compliance.
     public string ReportHours() =>
-        $"{Name}: {RegularHours()} regular h, {TotalHours - RegularHours()} overtime h";
+        $"{Name}: {RegularHours():0.##} regular h, {TotalHours - RegularHours():0.##} overtime h";
 
     // The DBAs' rule: how an employee is persisted (simulated - we just build the SQL).
     public string Save() =>

@@ -32,13 +32,18 @@ public class CheckingAccount(decimal opening) : Account(opening), IWithdrawable
 }
 
 // ✅ Charges a fee - but the fee is part of the contract, so callers can account for it.
+//    Compared with a plain CheckingAccount it requires MORE (the full balance can no longer be
+//    withdrawn). That's still substitutable only because IWithdrawable states its precondition
+//    and postcondition in terms of FeeFor(amount), which callers can ask for.
 public class PayAsYouGoAccount(decimal opening) : CheckingAccount(opening)
 {
     public override decimal FeeFor(decimal amount) => 1.00m;
 }
 
-// ✅ WEAKENING a precondition is allowed by LSP: it accepts everything a CheckingAccount
-//    accepts, and more. Old clients can't tell the difference.
+// ✅ Accepts everything a CheckingAccount accepts, and more (a weaker precondition).
+//    Careful: a client that assumed "Balance never goes negative" WOULD notice. This is
+//    substitutable only because IWithdrawable makes OverdraftLimit part of the contract and
+//    never promises Balance >= 0. The contract decides, not the "accepts more" rule alone.
 public class OverdraftAccount(decimal opening, decimal limit) : CheckingAccount(opening)
 {
     public override decimal OverdraftLimit => limit;

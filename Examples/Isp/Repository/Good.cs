@@ -48,7 +48,8 @@ public sealed class MonthlyReport(IReader<Order> orders)
         orders.List().Where(o => o.Date.Year == year && o.Date.Month == month).Sum(o => o.Total);
 }
 
-// 🤔 CONTEXT: this is also the core idea behind CQRS (separating reads from writes).
+// 🤔 CONTEXT: this is Command-Query Separation applied to interfaces - the same read/write
+//    split that CQRS takes further with separate models.
 //    But don't go further than your clients need: IGetter<T>, ILister<T>, IAdder<T>, IUpdater<T>,
 //    IDeleter<T> - one per method - would satisfy ISP's letter and make the code harder to navigate.
 //    If you have one CRUD screen and nothing else, IRepository<T> might be exactly right.

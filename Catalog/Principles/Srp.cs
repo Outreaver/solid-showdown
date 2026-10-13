@@ -150,7 +150,7 @@ internal static class Srp
                 "Legal says books are taxed at 5%.",
                 Impacts("Same class again. Marketing's and IT's code ships with Finance's change.",
                     Mod("InvoiceService"), Retest("Marketing"), Retest("IT Ops")),
-                Impacts("Only TaxCalculator is edited, and its tests run in isolation (see the demo).", Mod("TaxCalculator")),
+                Impacts("TaxCalculator is edited, and its tests run in isolation (see the demo). InvoiceLine also needs a product category, a change to shared data like the department in the payroll example, but Marketing's and IT's classes aren't opened.", Mod("TaxCalculator")),
                 "Isolated ownership also gives you isolated tests. Finance's test no longer sends e-mails."),
             new("Also archive a PDF copy", "Product",
                 "Every invoice must also be stored as a PDF.",

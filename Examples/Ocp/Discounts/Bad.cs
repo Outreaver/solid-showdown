@@ -4,8 +4,9 @@ public enum CustomerType { Regular, Premium, Staff }
 
 // ❌ BREAKS OCP: every new kind of customer forces us to OPEN and EDIT this class.
 //    Worse, the same `switch` on CustomerType is copy-pasted into other classes
-//    (see LoyaltyCalculator). Adding one enum value means hunting down every switch -
-//    "shotgun surgery" - and the compiler won't tell you which ones you missed.
+//    (see LoyaltyCalculator) - Fowler's "Repeated Switches" smell. Adding one enum value
+//    means hunting down every switch ("shotgun surgery"), and with a catch-all `_ =>` case
+//    the compiler won't tell you which ones you missed.
 public sealed class PriceCalculator
 {
     public decimal Price(decimal basePrice, CustomerType type) => type switch
@@ -13,7 +14,8 @@ public sealed class PriceCalculator
         CustomerType.Regular => basePrice,
         CustomerType.Premium => basePrice * 0.90m,
         CustomerType.Staff => basePrice * 0.70m,
-        _ => basePrice, // ❌ the silent fallback that hides forgotten cases
+        _ => basePrice, // ❌ the silent fallback that hides forgotten cases. Without it, C# warns (CS8509)
+                        //    about every unhandled enum value - turn on TreatWarningsAsErrors.
     };
 }
 

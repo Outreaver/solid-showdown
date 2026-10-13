@@ -18,7 +18,7 @@ public static class Demo
         [
             ("Setting Width keeps Height", r => { r.Height = 2; r.Width = 5; return r.Height == 2; }),
             ("Setting Height keeps Width", r => { r.Width = 5; r.Height = 2; return r.Width == 5; }),
-            ("Area == Width × Height after setting both", r => { r.Width = 5; r.Height = 2; return r.Area == 10; }),
+            ("Setting Width = 5, then Height = 2 gives Area 10", r => { r.Width = 5; r.Height = 2; return r.Area == 10; }),
         ];
 
         log.RunContract("Rectangle contract", subjects, contract);
@@ -46,8 +46,8 @@ public static class Demo
         log.RunContract("IShape contract", subjects, contract);
 
         log.Header("A client written against Rectangle");
-        var area = Good.BannerLayout.MakeBanner(new Good.Rectangle(10, 10));
-        log.Check($"BannerLayout.MakeBanner(Rectangle) == 4 (got {area})", () => area == 4);
-        log.Ok("BannerLayout.MakeBanner(new Square(3)) - does not compile, so it can't misbehave.");
+        var area = Good.BannerLayout.MakeBanner(new Good.Rectangle(10, 10)).Area;
+        log.Check($"BannerLayout.MakeBanner(Rectangle).Area == 4 (got {area})", () => area == 4);
+        log.Muted("BannerLayout.MakeBanner(new Square(3)) wouldn't compile, so it can't misbehave.");
     }
 }
