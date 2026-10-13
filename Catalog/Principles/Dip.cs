@@ -116,7 +116,7 @@ internal static class Dip
 
     private static Example Clock => new(
         Id: "clock",
-        Title: "Trial expiry: DateTime.UtcNow vs. TimeProvider",
+        Title: "Trial expiry: DateTimeOffset.UtcNow vs. TimeProvider",
         Summary: "A small, very common case. A business rule reads the system clock directly. The dependency is hidden, so tests become date-dependent. .NET's TimeProvider is a ready-made abstraction.",
         Bad: new(
             [Src("Dip/Clock", "Bad.cs")],
@@ -125,9 +125,9 @@ internal static class Dip
             Diagram(
                 [
                     Cls("TrialService", 0.5, 0, "IsExpired · DaysLeft"), Ext("Tests", 1.9, 0),
-                    Ext("DateTime.UtcNow", 0.5, 2.6, "global, static, uncontrollable"),
+                    Ext("DateTimeOffset.UtcNow", 0.5, 2.6, "global, static, uncontrollable"),
                 ],
-                Uses("TrialService", "DateTime.UtcNow", "hidden"), Uses("Tests", "TrialService"))
+                Uses("TrialService", "DateTimeOffset.UtcNow", "hidden"), Uses("Tests", "TrialService"))
                 .WithBands(DomainBand, InfraBand with { ToRow = 2.6 }),
             Clock_Demo.RunBad),
         Good: new(
@@ -159,7 +159,7 @@ internal static class Dip
                 "DIP doesn't help with policy changes and isn't meant to. The policy is the core that DIP protects from details."),
             new("Use a network-synchronised clock", "IT Ops",
                 "Servers drift, so licence checks should use an NTP-backed time source.",
-                Impacts("Every DateTime.UtcNow call in the codebase must be found and replaced.",
+                Impacts("Every DateTimeOffset.UtcNow call in the codebase must be found and replaced.",
                     Mod("TrialService")),
                 Impacts("A new TimeProvider subclass, wired in at the composition root.")
                     .Adding([Cls("NtpTimeProvider", 2.4, 2.6)], Impl("NtpTimeProvider", "TimeProvider")),

@@ -23,7 +23,7 @@ internal static class Lsp
         ItDepends:
         [
             "Whether a subtype violates LSP depends entirely on what the base type promises. Write that contract down (XML docs, tests); otherwise everyone argues about an implicit one.",
-            "Square : Rectangle breaks LSP for a mutable Rectangle with independent setters, but is fine for an immutable one. Same \"is-a\", different contract.",
+            "Square : Rectangle breaks LSP for a mutable Rectangle with independent setters, but is fine for a truly immutable one (get-only properties). Same \"is-a\", different contract. Careful in C#: a positional record's `with` can still set Width on a Square.",
             ".NET deliberately puts capability checks into contracts (ICollection<T>.IsReadOnly, Stream.CanWrite). Throwing NotSupportedException is then legal, but every client has to check.",
             "Whether a fee or a log line counts as a violation depends on whether the contract mentions it. Which side effects are \"allowed\" is a design decision.",
         ],
@@ -69,7 +69,7 @@ internal static class Lsp
                 [
                     Cls("BannerLayout", 0, 0, "needs width & height"), Ext("Contract tests", 1.9, 0, "Demo.cs"),
                     Ifc("IShape", 1.2, 1.3, "Area · Scale(k)"),
-                    Cls("Rectangle", 0.5, 2.6, "record (Width, Height)"), Cls("Square", 1.9, 2.6, "record (Side)"),
+                    Cls("Rectangle", 0.5, 2.6, "record, get-only Width/Height"), Cls("Square", 1.9, 2.6, "record, get-only Side"),
                 ],
                 Uses("BannerLayout", "Rectangle"), Uses("Contract tests", "IShape"),
                 Impl("Rectangle", "IShape"), Impl("Square", "IShape")),
@@ -93,13 +93,14 @@ internal static class Lsp
                 Impacts("Circle can't sensibly be a Rectangle (what is its Width setter?). The hierarchy has to be reshaped.",
                     Mod("Rectangle")).Adding([Cls("Circle", 2.4, 2.6, "Width = Height = diameter?")], Impl("Circle", "Rectangle")),
                 Impacts("A new record that implements IShape, verified by the same contract tests.")
-                    .Adding([Cls("Circle", 3.1, 2.6, "record (Radius)")], Impl("Circle", "IShape")),
+                    .Adding([Cls("Circle", 3.1, 2.6, "record, get-only Radius")], Impl("Circle", "IShape")),
                 "A contract that promises only what all subtypes share is easier to extend, so LSP helps OCP."),
         ],
         DemoSourcePath: Src("Lsp/Shapes", "Demo.cs"),
         ContextNotes:
         [
-            "With an immutable Rectangle (no setters), Square : Rectangle would pass every contract test. The is-a relation is only valid relative to a contract.",
+            "With a truly immutable Rectangle (get-only properties), Square : Rectangle would pass every contract test. The is-a relation is only valid relative to a contract.",
+            "C# records are not automatically that. Positional records generate `init` accessors, so `rect with { Width = 4 }` on a Square held as a Rectangle yields a non-square Square. That's why Good.cs declares get-only properties.",
             "Contract tests (one suite run against all implementations) are the most practical LSP tool. The demos use exactly that technique.",
         ]);
 

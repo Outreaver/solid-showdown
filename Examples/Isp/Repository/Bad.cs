@@ -28,7 +28,7 @@ public sealed class AuditLogStore : IRepository<AuditEntry>
 {
     private readonly List<AuditEntry> _entries = [];
     public AuditEntry? Get(int id) => _entries.FirstOrDefault(e => e.Id == id);
-    public IReadOnlyList<AuditEntry> List() => _entries;
+    public IReadOnlyList<AuditEntry> List() => _entries.AsReadOnly(); // not castable back to List<T>
     public void Add(AuditEntry item) => _entries.Add(item);
     public void Update(AuditEntry item) => throw new NotSupportedException("Audit log is append-only");
     public void Delete(int id) => throw new NotSupportedException("Audit log is append-only");

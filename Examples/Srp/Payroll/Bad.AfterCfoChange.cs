@@ -28,7 +28,7 @@ public class Employee(string name, decimal hourlyRate, IReadOnlyList<TimeEntry> 
         $"{Name}: {RegularHours():0.##} regular h, {TotalHours - RegularHours():0.##} overtime h";
 
     public string Save() =>
-        $"INSERT INTO employees (name, rate) VALUES ('{Name}', {HourlyRate})";
+        $"INSERT INTO employees (name, rate) VALUES (@name, @rate) -- @name = {Name}, @rate = {HourlyRate}";
 
     // ❌ The only edited line. It was meant for Accounting, but HR's report reads it too.
     private decimal RegularHours() => Week.Sum(e => Math.Min(e.Hours, 7.5m));

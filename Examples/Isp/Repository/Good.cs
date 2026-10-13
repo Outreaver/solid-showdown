@@ -37,7 +37,7 @@ public sealed class AuditLogStore : IReader<AuditEntry>, IAppender<AuditEntry>
 {
     private readonly List<AuditEntry> _entries = [];
     public AuditEntry? Get(int id) => _entries.FirstOrDefault(e => e.Id == id);
-    public IReadOnlyList<AuditEntry> List() => _entries;
+    public IReadOnlyList<AuditEntry> List() => _entries.AsReadOnly(); // not castable back to List<T>
     public void Add(AuditEntry item) => _entries.Add(item);
 }
 

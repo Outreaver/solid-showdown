@@ -33,9 +33,9 @@ public class Employee(string name, decimal hourlyRate, IReadOnlyList<TimeEntry> 
     public string ReportHours() =>
         $"{Name}: {RegularHours():0.##} regular h, {TotalHours - RegularHours():0.##} overtime h";
 
-    // The DBAs' rule: how an employee is persisted (simulated - we just build the SQL).
+    // The DBAs' rule: how an employee is persisted (simulated - we just build the parameterised SQL).
     public string Save() =>
-        $"INSERT INTO employees (name, rate) VALUES ('{Name}', {HourlyRate})";
+        $"INSERT INTO employees (name, rate) VALUES (@name, @rate) -- @name = {Name}, @rate = {HourlyRate}";
 
     // ❌ The trap. Both CalculatePay() and ReportHours() call this helper because
     //    "regular hours" LOOKED like one concept to the developer who wrote it.

@@ -46,7 +46,7 @@ public static class Demo
         log.RunContract("IShape contract", subjects, contract);
 
         log.Header("A client written against Rectangle");
-        var area = Good.BannerLayout.MakeBanner(new Good.Rectangle(10, 10)).Area;
+        var area = Good.BannerLayout.MakeBanner(new Good.Rectangle(2, 1)).Area;
         log.Check($"BannerLayout.MakeBanner(Rectangle).Area == 4 (got {area})", () => area == 4);
         log.Muted("BannerLayout.MakeBanner(new Square(3)) wouldn't compile, so it can't misbehave.");
     }

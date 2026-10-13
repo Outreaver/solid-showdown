@@ -14,8 +14,10 @@ public sealed class PriceCalculator
         CustomerType.Regular => basePrice,
         CustomerType.Premium => basePrice * 0.90m,
         CustomerType.Staff => basePrice * 0.70m,
-        _ => basePrice, // ❌ the silent fallback that hides forgotten cases. Without it, C# warns (CS8509)
-                        //    about every unhandled enum value - turn on TreatWarningsAsErrors.
+        _ => basePrice, // ❌ the silent fallback that hides forgotten cases. Without ANY `_` arm (even
+                        //    a throwing one) C# warns CS8509 when an enum value is missing. Make that
+                        //    one an error: <WarningsAsErrors>CS8509</WarningsAsErrors>. Also add
+                        //    <NoWarn>CS8524</NoWarn>: it fires even when every named value is handled.
     };
 }
 

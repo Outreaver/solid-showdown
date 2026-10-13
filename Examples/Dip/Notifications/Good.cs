@@ -50,7 +50,7 @@ public sealed class InMemoryOrderNotifier : IOrderNotifier
 
 // ===================== Composition root =====================
 // The ONE place that knows about concrete classes (Program.cs / DI container):
-//     services.AddScoped<IOrderNotifier, SmsOrderNotifier>();
+//     services.AddScoped<IOrderNotifier>(_ => new SmsOrderNotifier(sentMessages));
 //     services.AddScoped<OrderService>();
 
 // 🤔 CONTEXT: DIP is not "put an interface in front of every class".

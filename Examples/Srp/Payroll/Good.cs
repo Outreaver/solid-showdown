@@ -48,7 +48,7 @@ public sealed class HourReporter
 public sealed class EmployeeRepository
 {
     public string Save(EmployeeData e) =>
-        $"INSERT INTO employees (name, rate) VALUES ('{e.Name}', {e.HourlyRate})";
+        $"INSERT INTO employees (name, rate) VALUES (@name, @rate) -- @name = {e.Name}, @rate = {e.HourlyRate}";
 }
 
 // Optional: callers who liked the old "one object" API can get it back through a facade.

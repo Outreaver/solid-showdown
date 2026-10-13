@@ -17,7 +17,7 @@ public sealed class TaxCalculator
     private const decimal VatRate = 0.23m;
 
     public decimal Total(Invoice invoice) =>
-        Math.Round(invoice.Lines.Sum(l => l.NetPrice * l.Quantity) * (1 + VatRate), 2);
+        Math.Round(invoice.Lines.Sum(l => l.NetPrice * l.Quantity) * (1 + VatRate), 2, MidpointRounding.AwayFromZero);
 }
 
 // ✅ Marketing owns this. Changes when the brand / layout changes.

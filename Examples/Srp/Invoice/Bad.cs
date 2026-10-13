@@ -24,7 +24,7 @@ public sealed class InvoiceService(Outbox outbox)
     {
         // --- Finance: how money is calculated ---
         var net = invoice.Lines.Sum(l => l.NetPrice * l.Quantity);
-        var total = Math.Round(net * (1 + VatRate), 2);
+        var total = Math.Round(net * (1 + VatRate), 2, MidpointRounding.AwayFromZero);
 
         // --- Marketing: how the document looks ---
         var html = new StringBuilder();
